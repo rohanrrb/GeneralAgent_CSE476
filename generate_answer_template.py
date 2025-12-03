@@ -133,6 +133,45 @@ def main() -> None:
         print("rec", rec)
         print("f1", f1)
 
+    if CLASSIFICATION:
+        num_cases = len(questions)
+        correct = 0
+
+        tp = 0
+        fp = 0
+        fn = 0
+
+        classifications = classify(questions)
+        for q, ans in zip(questions, classifications):
+            gt = Domain(q["domain"])
+            pred = ans["output"]
+
+            if pred == gt:
+                correct += 1
+                tp += 1
+            else:
+                fp += 1
+                fn += 1
+
+        acc = correct / num_cases
+
+        if (tp + fp) > 0:
+            prec = tp / (tp + fp)
+        else:
+            prec = 0
+
+        if (tp + fn) > 0:
+            rec = tp / (tp + fn)
+        else:
+            rec = 0
+
+        f1 = 2 * prec * rec / (prec + rec) if (prec + rec) > 0 else 0.0
+
+        print("-----------------CLASSIFIER------------------")
+        print("acc", acc)
+        print("prec", prec)
+        print("rec", rec)
+        print("f1", f1)
 if __name__ == "__main__":
     main()
 
