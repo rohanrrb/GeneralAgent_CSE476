@@ -14,14 +14,31 @@ from __future__ import annotations
 import json
 from pathlib import Path
 from typing import Any, Dict, List
+from agent import query_agent, classify_domain, Domain
+import sys
+from pathlib import Path
 
 
-INPUT_PATH = Path("cse_476_final_project_test_data.json")
-OUTPUT_PATH = Path("cse_476_final_project_answers.json")
+if len(sys.argv) != 6:
+
+    INPUT_PATH = Path("cse_476_final_project_test_data.json")
+    OUTPUT_PATH = Path("cse_476_final_project_answers.json")
+
+    EVAL = False
+    CLASSIFICATION = False
+
+else:
+    INPUT_PATH = Path(sys.argv[1])
+    OUTPUT_PATH = Path("cse_476_final_project_answers.json")
+
+    EVAL = (sys.argv[3]) == "True"
+    CLASSIFICATION = (sys.argv[5])== "True"
+
+print("running on", INPUT_PATH)
 
 
 def load_questions(path: Path) -> List[Dict[str, Any]]:
-    with path.open("r") as fp:
+    with path.open("r", encoding="utf-8") as fp:
         data = json.load(fp)
     if not isinstance(data, list):
         raise ValueError("Input file must contain a list of question objects.")
@@ -31,13 +48,16 @@ def load_questions(path: Path) -> List[Dict[str, Any]]:
 def build_answers(questions: List[Dict[str, Any]]) -> List[Dict[str, str]]:
     answers = []
     for idx, question in enumerate(questions, start=1):
-        # Example: assume you have an agent loop that produces an answer string.
-        # real_answer = agent_loop(question["input"])
-        # answers.append({"output": real_answer})
-        placeholder_answer = f"Placeholder answer for question {idx}"
-        answers.append({"output": placeholder_answer})
+        agent_ans = query_agent(question["input"])
+        answers.append({"output": agent_ans})
     return answers
 
+def classify(questions: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    answers = []
+    for idx, question in enumerate(questions, start=1):
+        agent_ans = classify_domain(question["input"])
+        answers.append({"output": agent_ans})
+    return answers
 
 def validate_results(
     questions: List[Dict[str, Any]], answers: List[Dict[str, Any]]
@@ -64,10 +84,10 @@ def main() -> None:
     questions = load_questions(INPUT_PATH)
     answers = build_answers(questions)
 
-    with OUTPUT_PATH.open("w") as fp:
+    with OUTPUT_PATH.open("w", encoding="utf-8") as fp:
         json.dump(answers, fp, ensure_ascii=False, indent=2)
 
-    with OUTPUT_PATH.open("r") as fp:
+    with OUTPUT_PATH.open("r", encoding="utf-8") as fp:
         saved_answers = json.load(fp)
     validate_results(questions, saved_answers)
     print(
@@ -75,6 +95,43 @@ def main() -> None:
         "and validated format successfully."
     )
 
+    if EVAL:
+        num_cases = len(questions)
+        correct = 0
+
+        tp = 0
+        fp = 0
+        fn = 0
+
+        for q, ans in zip(questions, answers):
+            gt = q["output"]
+            pred = ans["output"]
+
+            if pred == gt:
+                correct += 1
+                tp += 1
+            else:
+                fp += 1
+                fn += 1
+
+        acc = correct / num_cases
+
+        if (tp + fp) > 0:
+            prec = tp / (tp + fp)
+        else:
+            prec = 0
+
+        if (tp + fn) > 0:
+            rec = tp / (tp + fn)
+        else:
+            rec = 0
+
+        f1 = 2 * prec * rec / (prec + rec) if (prec + rec) > 0 else 0.0
+        print("-----------------PERF------------------")
+        print("acc", acc)
+        print("prec", prec)
+        print("rec", rec)
+        print("f1", f1)
 
 if __name__ == "__main__":
     main()
