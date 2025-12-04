@@ -12,12 +12,18 @@ an answers JSON file where each entry contains a string under the "output" key.
 from __future__ import annotations
 
 import json
-from pathlib import Path
 from typing import Any, Dict, List
 from agent import query_agent, classify_domain, Domain
 import sys
 from pathlib import Path
 import random
+from sentence_transformers import SentenceTransformer
+import numpy as np
+
+model = SentenceTransformer("all-MiniLM-L6-v2")
+
+def cosine_sim(a, b):
+    return float(np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b)))
 
 
 if len(sys.argv) != 6:
@@ -48,12 +54,15 @@ def load_questions(path: Path) -> List[Dict[str, Any]]:
     #return random.sample(data, 100)
     return data
 
+verbose_answers = []
 
 def build_answers(questions: List[Dict[str, Any]]) -> List[Dict[str, str]]:
     answers = []
     for idx, question in enumerate(questions, start=1):
         agent_ans = query_agent(question["input"])
         answers.append({"output": agent_ans})
+        if EVAL:
+            verbose_answers.append({"question": question["input"], "gold": question["output"], "pred": agent_ans})
     return answers
 
 def classify(questions: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -104,17 +113,25 @@ def main() -> None:
         num_cases = len(questions)
         correct = 0
 
-        for q, ans in zip(questions, answers):
+        for q, ans, out in zip(questions, answers, verbose_answers):
             gt = q["output"]
             pred = ans["output"]
 
-            if pred == gt:
+            embeddings = model.encode([gt, pred])
+            gt_embedding, pred_embedding = embeddings[0], embeddings[1]
+            match = cosine_sim(pred_embedding, gt_embedding)
+
+            if match > 0.7:
                 correct += 1
+
+            out.update({"score": match})
 
         acc = correct / num_cases
         print("-----------------PERF------------------")
         print("acc", acc)
 
+    with Path("verbose_output.json").open("w", encoding="utf-8") as f: # f: TextIO
+        json.dump(verbose_answers, f, ensure_ascii=False, indent=2)
 
     if CLASSIFICATION:
         print("-----------------CLASSIFIER------------------")

@@ -15,6 +15,10 @@ For verbose run on dev set:
 
 `python generate_answer_template.py cse476_final_project_dev_data.json --dev True --classify True`
 
+Without classification evaluation:
+
+`python generate_answer_template.py cse476_final_project_dev_data.json --dev True --classify False`
+
 ### Flags
 
 - `--dev True` indicates the input file has ground-truth output to generate perf metrics
