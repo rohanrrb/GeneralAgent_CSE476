@@ -17,6 +17,7 @@ from typing import Any, Dict, List
 from agent import query_agent, classify_domain, Domain
 import sys
 from pathlib import Path
+import random
 
 
 if len(sys.argv) != 6:
@@ -42,7 +43,9 @@ def load_questions(path: Path) -> List[Dict[str, Any]]:
         data = json.load(fp)
     if not isinstance(data, list):
         raise ValueError("Input file must contain a list of question objects.")
-    return data
+
+    #for testing | for entire 'return data'
+    return random.sample(data, 20)
 
 
 def build_answers(questions: List[Dict[str, Any]]) -> List[Dict[str, str]]:
