@@ -51,7 +51,7 @@ def load_questions(path: Path) -> List[Dict[str, Any]]:
 def build_answers(questions: List[Dict[str, Any]]) -> List[Dict[str, str]]:
     answers = []
     for idx, question in enumerate(questions, start=1):
-        agent_ans = query_agent(question["input"])
+        agent_ans = query_agent(question["input"], classify_domain(question["input"]))
         answers.append({"output": agent_ans})
     return answers
 
@@ -92,6 +92,7 @@ def main() -> None:
 
     with OUTPUT_PATH.open("r", encoding="utf-8") as fp:
         saved_answers = json.load(fp)
+
     validate_results(questions, saved_answers)
     print(
         f"Wrote {len(answers)} answers to {OUTPUT_PATH} "
