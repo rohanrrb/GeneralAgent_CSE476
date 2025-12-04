@@ -45,7 +45,8 @@ def load_questions(path: Path) -> List[Dict[str, Any]]:
         raise ValueError("Input file must contain a list of question objects.")
 
     #for testing | for entire 'return data'
-    return random.sample(data, 20)
+    #return random.sample(data, 100)
+    return data
 
 
 def build_answers(questions: List[Dict[str, Any]]) -> List[Dict[str, str]]:
