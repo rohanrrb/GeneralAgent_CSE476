@@ -51,7 +51,9 @@ def load_questions(path: Path) -> List[Dict[str, Any]]:
         raise ValueError("Input file must contain a list of question objects.")
 
     #for testing | for entire 'return data'
-    #return random.sample(data, 100)
+    #return random.sample(data, 10)
+    # math_questions = [q for q in data if q.get("domain") == "math"]
+    # return math_questions
     return data
 
 verbose_answers = []
@@ -59,6 +61,8 @@ verbose_answers = []
 def build_answers(questions: List[Dict[str, Any]]) -> List[Dict[str, str]]:
     answers = []
     for idx, question in enumerate(questions, start=1):
+        if idx % 100 == 0:
+            print("checkpoint", idx)
         agent_ans = query_agent(question["input"])
         answers.append({"output": agent_ans})
         if EVAL:
