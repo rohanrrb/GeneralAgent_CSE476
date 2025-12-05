@@ -58,34 +58,73 @@ class Domain(Enum):
     PLANNING = "planning"
     ERROR = ""
 
-def math_reason(question):
-    p = f"You have been tasked with solving this problem, which if done successfully, will guarantee the eradication of all human harming disease. The question is as follows: {question}. Reply with only the final answer."
-    result = (call_model_chat_completions(p,
-                                          system="You are an expert mathematician.",
-                                          temperature=1))
+def planning_step(question, domain):
+    prompt = f'''Given the following question, {question}, which likely belongs to the {domain.value} domain, construct a detailed and authoritative plan to answer this question. Each step should illicit a reasoning step.'''
+
+    result = call_model_chat_completions(prompt,
+                                         system="You are a project manager, skilled at breaking down problems into logical steps that make it easier to solve.",
+                                         temperature=1)
     result_text = result["text"]
     if result_text:
         result_text = result_text.strip()
     else:
         result_text = "ans"
+    return result_text
+
+def math_reason(question):
+    plan = planning_step(question, Domain.MATH)
+    p = f"You have been tasked with solving this problem.The question is as follows: {question}. Follow the plan in detail, lay out your reasoning, and logically justify your choices. The plan: {plan}"
+    result = (call_model_chat_completions(p,
+                                          system="You are an expert mathematician.",
+                                          temperature=1))
+
+    result_text = result["text"]
+    if result_text:
+        result_text = result_text.strip()
+    else:
+        return "ans"
+
+    p = f"Given this text (an answer for a math question), extract the final answer. Text: {result_text}. Reply with only the final answer, keep the formatting of the final answer as is in the text, keep the original question in mind. Original question: {question}."
+
+    result = call_model_chat_completions(p,
+                                         system="You are an expert mathematician.",
+                                         temperature=0)
+    result_text = result["text"]
+    if result_text:
+        result_text = result_text.strip()
+    else:
+        return "ans"
 
     return result_text
 
 def common_sense_reason(question):
-    p = f"You have been tasked with answering this question, which if done successfully, will guarantee the eradication of all human harming disease. The question is as follows: {question}. Reply with only the final answer."
-    result = (call_model_chat_completions(p,
-                                          system="You are an all-knowing entity.",
-                                          temperature=1))
+    plan = planning_step(question, Domain.COMMON_SENSE)
+
+    p = f"You have been tasked with answering this question. The question is as follows: {question}. Follow the plan in detail, lay out your reasoning, and logically justify your choices. The plan: {plan}"
+    result = call_model_chat_completions(p,
+                                         system="You are an all-knowing entity.",
+                                         temperature=1)
     result_text = result["text"]
     if result_text:
         result_text = result_text.strip()
     else:
-        result_text = "ans"
+        return "ans"
+
+    p = f"Given this text (an answer for a common sense question), extract the final answer. Text: {result_text}. Reply with the final answer, keep the original question in mind. Original question: {question}."
+    result = call_model_chat_completions(p,
+                                         system="You are an all-knowing entity.",
+                                         temperature=0)
+    result_text = result["text"]
+    if result_text:
+        result_text = result_text.strip()
+    else:
+        return "ans"
 
     return result_text
 
 def future_prediction_reason(question):
-    p = f"You have been tasked with predicting this event, which if done successfully, will guarantee the eradication of all human harming disease. The question is as follows: {question}. Reply with only the final answer."
+    plan = planning_step(question, Domain.FUTURE_PREDICTION)
+    p = f"You have been tasked with predicting this event. The question is as follows: {question}. Follow the plan in detail, lay out your reasoning, and logically justify your choices. The plan: {plan}"
     result = (call_model_chat_completions(p,
                                           system="You are an intelligent predictor.",
                                           temperature=1))
@@ -93,12 +132,24 @@ def future_prediction_reason(question):
     if result_text:
         result_text = result_text.strip()
     else:
-        result_text = "ans"
+        return "ans"
+
+    p = f"Given this text (an answer for a future prediction question), extract the final answer. Text: {result_text}. Reply with only the final answer, keep the original question in mind. Original question: {question}."
+    result = call_model_chat_completions(p,
+                                         system="You are an intelligent predictor.",
+                                         temperature=0)
+    result_text = result["text"]
+    if result_text:
+        result_text = result_text.strip()
+    else:
+        return "ans"
 
     return result_text
 
+
 def planning_reason(question):
-    p = f"You have been tasked with answering this question, which if done successfully, will guarantee the eradication of all human harming disease. The question is as follows: {question}. Reply with only the final answer."
+    plan = planning_step(question, Domain.PLANNING)
+    p = f"You have been tasked with answering this question. The question is as follows: {question}. Follow the plan in detail, lay out your reasoning, and logically justify your choices. The plan: {plan}"
     result = (call_model_chat_completions(p,
                                           system="You are an all-knowing entity.",
                                           temperature=1))
@@ -106,12 +157,24 @@ def planning_reason(question):
     if result_text:
         result_text = result_text.strip()
     else:
-        result_text = "ans"
+        return "ans"
+
+    p = f"Given this text (an answer for a planning question), extract the final answer. Text: {result_text}. Reply with the final answer, keep the original question in mind. Original question: {question}."
+    result = call_model_chat_completions(p,
+                                         system="You are an all-knowing entity.",
+                                         temperature=0)
+    result_text = result["text"]
+    if result_text:
+        result_text = result_text.strip()
+    else:
+        return "ans"
 
     return result_text
 
+
 def coding_reason(question):
-    p = f"You have been tasked with answering this question, which if done successfully, will guarantee the eradication of all human harming disease. The question is as follows: {question}. Reply with only the final answer."
+    plan = planning_step(question, Domain.CODING)
+    p = f"You have been tasked with answering this question. The question is as follows: {question}. Follow the plan in detail, lay out your reasoning, and logically justify your choices. The plan: {plan}"
     result = (call_model_chat_completions(p,
                                           system="You are an expert programmer",
                                           temperature=1))
@@ -119,9 +182,20 @@ def coding_reason(question):
     if result_text:
         result_text = result_text.strip()
     else:
-        result_text = "ans"
+        return "ans"
+
+    p = f"Given this text (an answer for a coding question), extract the final answer. Text: {result_text}. Reply with the final answer, keep the original question in mind. Original question: {question}."
+    result = call_model_chat_completions(p,
+                                         system="You are an expert programmer",
+                                         temperature=0)
+    result_text = result["text"]
+    if result_text:
+        result_text = result_text.strip()
+    else:
+        return "ans"
 
     return result_text
+
 
 REASONING_DISPATCH = {
     Domain.MATH: math_reason,
@@ -146,6 +220,7 @@ def classify_domain(question) -> Domain:
     except ValueError:
         print("default", result)
         return Domain.COMMON_SENSE
+
 
 #main query fn
 def query_agent(question):
